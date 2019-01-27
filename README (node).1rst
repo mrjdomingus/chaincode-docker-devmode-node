@@ -133,6 +133,69 @@ Finally, query ``a``.  We should see a value of ``90``.
 
   peer chaincode query -n mycc -c '{"Args":["query","a"]}' -C myc
 
+
+2nd Example mychaincode.js
+--------------------------
+
+Terminal 2 - Build & start the chaincode
+----------------------------------------
+
+.. code:: bash
+
+  docker exec -it chaincode bash
+
+You should see the following:
+
+.. code:: bash
+
+  root@d2629980e76b:/chaincodedev#
+
+Now, find your chaincode:
+
+.. code:: bash
+
+  cd chaincode/chaincode_example02/node
+
+Now run the chaincode:
+
+.. code:: bash
+
+  # Start node chaincode with debugger enabled
+  CORE_PEER_ADDRESS=peer:7052 CORE_CHAINCODE_ID_NAME=mycc:0 node --inspect-brk=0.0.0.0 mychaincode.js --peer.address peer:7052
+
+As the node debugger will stop the chaincode at the first statement, go to Visual Studio Code and start the debugger.
+
+The chaincode is started with peer and chaincode logs indicating successful registration with the peer.
+Note that at this stage the chaincode is not associated with any channel. This is done in subsequent steps
+using the ``instantiate`` command.
+
+Terminal 3 - Use the chaincode
+------------------------------
+
+Even though you are in ``--peer-chaincodedev`` mode, you still have to install the
+chaincode so the life-cycle system chaincode can go through its checks normally.
+This requirement may be removed in future when in ``--peer-chaincodedev`` mode.
+
+We'll leverage the CLI container to drive these calls.
+
+.. code:: bash
+
+  docker exec -it cli bash
+
+.. code:: bash
+
+  # In case of node you need to provide the full path to the -p parameter. Also do not forget to add -l node parameter.
+  peer chaincode install -l node -p /chaincodedev/chaincode/chaincode_example02/node -n mycc -v 0
+  # Do not forget to add -l node parameter!
+  peer chaincode instantiate -o orderer:7050 -l node -n mycc -v 0 -c '{"Args":["init"]}' -C myc -P 'OR ("Org1MSP.member")'
+
+Now issue an invoke to retrieve the dummy value.
+
+.. code:: bash
+
+  peer chaincode invoke -n mycc -c '{"Args":["dummy"]}' -C myc
+
+
 Testing new chaincode
 ---------------------
 
